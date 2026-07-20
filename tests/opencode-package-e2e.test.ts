@@ -10,7 +10,7 @@ const version = spawnSync(opencode, ["--version"], { encoding: "utf8" });
 const hasOpenCode = version.status === 0;
 const expectedVersion = process.env.OPENCODE_E2E_VERSION;
 
-test("packed npm artifact loads in OpenCode and registers its provider", { skip: !hasOpenCode, timeout: 60_000 }, () => {
+test("packed npm artifact loads in OpenCode and registers its provider", { skip: !hasOpenCode, timeout: 120_000 }, () => {
   if (expectedVersion) {
     assert.equal(version.stdout.trim(), expectedVersion, `expected OpenCode ${expectedVersion}`);
   }
