@@ -2817,6 +2817,7 @@ export function createOmniRouteProviderHook(
 import { homedir } from "os";
 import {
   appendFileSync,
+  chmodSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -2893,8 +2894,13 @@ export function parseSseDebugMeta(body: string): {
 
 function debugLogDir(): string {
   const dir = join(homedir(), ".local", "share", "opencode", "plugins");
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  mkdirSync(dir, { recursive: true, mode: 0o700 });
+  chmodSync(dir, 0o700);
   return dir;
+}
+
+function makeDebugFilePrivate(file: string): void {
+  chmodSync(file, 0o600);
 }
 
 function debugLogPath(providerId: string): string {
@@ -2917,19 +2923,15 @@ export function debugLogEnabled(providerId: string): boolean {
 }
 
 export function debugLogSetEnabled(providerId: string, enabled: boolean): void {
-  writeFileSync(
-    debugStatePath(providerId),
-    JSON.stringify({ enabled }),
-    "utf8",
-  );
+  const file = debugStatePath(providerId);
+  writeFileSync(file, JSON.stringify({ enabled }), { encoding: "utf8", mode: 0o600 });
+  makeDebugFilePrivate(file);
 }
 
 export function debugLogAppend(entry: DebugLogEntry): void {
-  appendFileSync(
-    debugLogPath(entry.providerId),
-    JSON.stringify(entry) + "\n",
-    "utf8",
-  );
+  const file = debugLogPath(entry.providerId);
+  appendFileSync(file, JSON.stringify(entry) + "\n", { encoding: "utf8", mode: 0o600 });
+  makeDebugFilePrivate(file);
 }
 
 export function debugLogRead(providerId: string, limit = 20): DebugLogEntry[] {
