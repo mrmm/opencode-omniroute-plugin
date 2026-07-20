@@ -150,11 +150,35 @@ async function withWarnCapture<T>(
 // defaultOmniRouteCombosFetcher — envelope tolerance + error surfacing
 // ────────────────────────────────────────────────────────────────────────────
 
+test("defaultOmniRouteCombosFetcher: uses public /v1/combos and normalizes its data envelope", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: unknown) => {
+    const url = typeof input === "string" ? input : (input as { url: string }).url;
+    assert.equal(url, "https://or.example.com/v1/combos");
+    return new Response(
+      JSON.stringify({
+        object: "list",
+        data: [
+          { name: "combo-one", strategy: "priority", models: [] },
+          { id: "combo-two", name: "Combo Two", strategy: "weighted", models: [] },
+        ],
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  }) as typeof fetch;
+  try {
+    const combos = await defaultOmniRouteCombosFetcher("https://or.example.com/v1", "sk-test");
+    assert.deepEqual(combos.map((combo) => combo.id), ["combo-one", "combo-two"]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("defaultOmniRouteCombosFetcher: parses {combos:[…]} envelope", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = (async (input: unknown) => {
     const url = typeof input === "string" ? input : (input as { url: string }).url;
-    assert.equal(url, "https://or.example.com/api/combos");
+    assert.equal(url, "https://or.example.com/v1/combos");
     return new Response(
       JSON.stringify({
         combos: [
@@ -184,7 +208,7 @@ test("defaultOmniRouteCombosFetcher: parses bare array envelope", async () => {
   }) as typeof fetch;
   try {
     const combos = await defaultOmniRouteCombosFetcher("https://or.example.com/v1", "sk-test");
-    // Strip /v1 before /api/combos, AND filter out entries with no string id.
+    // Public /v1/combos accepts the base URL and filters entries with no id/name.
     assert.equal(combos.length, 2);
     assert.equal(combos[0].id, "c1");
     assert.equal(combos[1].id, "c2");
@@ -193,7 +217,7 @@ test("defaultOmniRouteCombosFetcher: parses bare array envelope", async () => {
   }
 });
 
-test("defaultOmniRouteCombosFetcher: strips trailing /v1 before /api/combos", async () => {
+test("defaultOmniRouteCombosFetcher: keeps one /v1 segment for the public combos endpoint", async () => {
   const originalFetch = globalThis.fetch;
   let observedUrl = "";
   globalThis.fetch = (async (input: unknown) => {
@@ -202,7 +226,7 @@ test("defaultOmniRouteCombosFetcher: strips trailing /v1 before /api/combos", as
   }) as typeof fetch;
   try {
     await defaultOmniRouteCombosFetcher("https://or.example.com/v1/", "sk-test");
-    assert.equal(observedUrl, "https://or.example.com/api/combos");
+    assert.equal(observedUrl, "https://or.example.com/v1/combos");
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -224,7 +248,7 @@ test("defaultOmniRouteCombosFetcher: throws on non-2xx with status code in messa
       (err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
         assert.match(msg, /403/, "status code must appear in message");
-        assert.match(msg, /\/api\/combos/, "url must appear in message");
+        assert.match(msg, /\/v1\/combos/, "url must appear in message");
         return true;
       }
     );

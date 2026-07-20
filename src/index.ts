@@ -879,51 +879,51 @@ export const defaultOmniRouteCombosFetcher: OmniRouteCombosFetcher = async (
       "@omniroute/opencode-plugin: baseURL required to fetch /api/combos",
     );
 
-  // Strip trailing slashes, then strip a trailing `/v1` so we land on the
-  // management plane. Models live under `/v1/models`; combos live under
-  // `/api/combos` from the same gateway root.
   const trimmed = trimTrailingSlashes(baseURL);
   const root = trimmed.replace(/\/v\d+$/, "");
-  const url = `${root}/api/combos`;
+  const urls = [`${root}/v1/combos`, `${root}/api/combos`];
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        Accept: "application/json",
-      },
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      throw new Error(
-        `@omniroute/opencode-plugin: GET ${url} failed: ${res.status} ${res.statusText}`,
-      );
-    }
-    const body = (await res.json()) as unknown;
-    const rawList: unknown[] = Array.isArray(body)
-      ? body
-      : body &&
-          typeof body === "object" &&
-          Array.isArray((body as { combos?: unknown }).combos)
-        ? ((body as { combos: unknown[] }).combos as unknown[])
-        : [];
-    const out: OmniRouteRawCombo[] = [];
-    for (const r of rawList) {
-      if (
-        r &&
-        typeof r === "object" &&
-        typeof (r as { id?: unknown }).id === "string"
-      ) {
-        out.push(r as OmniRouteRawCombo);
+  for (const [index, url] of urls.entries()) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: "application/json",
+        },
+        signal: controller.signal,
+      });
+      if (!res.ok) {
+        if (index === 0 && (res.status === 404 || res.status === 405)) continue;
+        throw new Error(
+          `@omniroute/opencode-plugin: GET ${url} failed: ${res.status} ${res.statusText}`,
+        );
       }
+      const body = (await res.json()) as unknown;
+      const rawList: unknown[] = Array.isArray(body)
+        ? body
+        : body && typeof body === "object" && Array.isArray((body as { combos?: unknown }).combos)
+          ? (body as { combos: unknown[] }).combos
+          : body && typeof body === "object" && Array.isArray((body as { data?: unknown }).data)
+            ? (body as { data: unknown[] }).data
+            : [];
+      const out: OmniRouteRawCombo[] = [];
+      for (const raw of rawList) {
+        if (!raw || typeof raw !== "object") continue;
+        const record = raw as Record<string, unknown>;
+        const id = typeof record.id === "string" ? record.id : record.name;
+        if (typeof id === "string" && id.length > 0) {
+          out.push({ ...record, id } as OmniRouteRawCombo);
+        }
+      }
+      return out;
+    } finally {
+      clearTimeout(timer);
     }
-    return out;
-  } finally {
-    clearTimeout(timer);
   }
+  return [];
 };
 
 /**
