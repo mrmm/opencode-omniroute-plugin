@@ -71,3 +71,11 @@ test("scaffold: CJS default export resolves via require() with v1 shape", () => 
   assert.strictEqual(cjs.default.id, "@omniroute/opencode-plugin");
   assert.strictEqual(typeof cjs.default.server, "function");
 });
+
+test("scaffold: package main resolves directly to the v1 plugin object for OpenCode", () => {
+  const require_ = createRequire(import.meta.url);
+  const plugin = require_("..");
+  assert.strictEqual(typeof plugin, "object");
+  assert.strictEqual(plugin.id, "@omniroute/opencode-plugin");
+  assert.strictEqual(typeof plugin.server, "function");
+});
