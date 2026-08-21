@@ -1,7 +1,7 @@
-# @mrmm/opencode-omniroute-plugin
+# @mr.mm/opencode-omniroute-plugin
 
 [![CI](https://github.com/mrmm/opencode-omniroute-plugin/actions/workflows/ci.yml/badge.svg)](https://github.com/mrmm/opencode-omniroute-plugin/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/@mrmm/opencode-omniroute-plugin)](https://www.npmjs.com/package/@mrmm/opencode-omniroute-plugin)
+[![npm](https://img.shields.io/npm/v/@mr.mm/opencode-omniroute-plugin)](https://www.npmjs.com/package/@mr.mm/opencode-omniroute-plugin)
 
 OpenCode plugin for the [OmniRoute AI Gateway](https://github.com/diegosouzapw/OmniRoute).
 
@@ -12,9 +12,9 @@ Fork of [`@omniroute/opencode-plugin`](https://github.com/diegosouzapw/OmniRoute
 ## Install
 
 ```sh
-npm install @mrmm/opencode-omniroute-plugin
+npm install @mr.mm/opencode-omniroute-plugin
 # or
-bunx add @mrmm/opencode-omniroute-plugin
+bunx add @mr.mm/opencode-omniroute-plugin
 ```
 
 For local development, clone and build:
@@ -46,7 +46,7 @@ Then reference the dist directly in `opencode.jsonc`:
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
     [
-      "@mrmm/opencode-omniroute-plugin",
+      "@mr.mm/opencode-omniroute-plugin",
       {
         "providerId": "omniroute",
         "baseURL": "https://your-omniroute-instance.example.com",
@@ -71,19 +71,19 @@ OC ≤1.15.5 dedupes plugin loads by module path — two entries pointing at the
 ```sh
 mkdir -p ~/.config/opencode/plugins/omniroute-prod
 mkdir -p ~/.config/opencode/plugins/omniroute-staging
-npm install --prefix ~/.config/opencode/plugins/omniroute-prod    @mrmm/opencode-omniroute-plugin
-npm install --prefix ~/.config/opencode/plugins/omniroute-staging @mrmm/opencode-omniroute-plugin
+npm install --prefix ~/.config/opencode/plugins/omniroute-prod    @mr.mm/opencode-omniroute-plugin
+npm install --prefix ~/.config/opencode/plugins/omniroute-staging @mr.mm/opencode-omniroute-plugin
 ```
 
 ```jsonc
 {
   "plugin": [
     [
-      "./plugins/omniroute-prod/node_modules/@mrmm/opencode-omniroute-plugin/dist/index.js",
+      "./plugins/omniroute-prod/node_modules/@mr.mm/opencode-omniroute-plugin/dist/index.js",
       { "providerId": "omniroute", "baseURL": "https://or.example.com" },
     ],
     [
-      "./plugins/omniroute-staging/node_modules/@mrmm/opencode-omniroute-plugin/dist/index.js",
+      "./plugins/omniroute-staging/node_modules/@mr.mm/opencode-omniroute-plugin/dist/index.js",
       {
         "providerId": "omniroute-staging",
         "baseURL": "https://or-staging.example.com",
