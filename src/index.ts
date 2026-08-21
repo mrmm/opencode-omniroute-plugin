@@ -4314,6 +4314,21 @@ export function createOmniRouteConfigHook(
       }
       const modelsFetchOk = !modelsFetchThrew && rawModels.length > 0;
 
+      // ── Normalize owned_by ────────────────────────────────────────────────
+      // OpenCode auto-discovers providers by grouping models under each unique
+      // `owned_by` value from /v1/models. When OmniRoute returns models with
+      // `owned_by: "combo"` (or any other non-omniroute value), OpenCode creates
+      // a separate provider entry without credentials, causing "No credentials
+      // for provider: combo" errors. Fix: normalize all `owned_by` values to the
+      // plugin's `providerId` so they stay under the same provider block.
+      if (rawModels.length > 0) {
+        for (const model of rawModels) {
+          if (model && typeof model.owned_by === "string" && model.owned_by !== resolved.providerId) {
+            model.owned_by = resolved.providerId;
+          }
+        }
+      }
+
       rawCombos = [];
       try {
         rawCombos = await combosFetcher(baseURL, apiKey, 10_000);
